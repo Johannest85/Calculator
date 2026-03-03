@@ -176,10 +176,15 @@ class  Max : IVisitable , IEnumerable<IVisitable>
 
     public void Accept(IVisitor vtor) => vtor.Visit(this);
 
-    public IEnumerator<IVisitable> GetEnumerator( int index)
+    public IEnumerator<IVisitable> GetEnumerator()
    {
-       return Expr[index];
+       return new MaxItrator(Expr);
    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
    
 }
 class FactorialOfNegativeException : ArgumentException
@@ -192,20 +197,26 @@ class FactorialOfNegativeException : ArgumentException
 
 class MaxItrator : IEnumerator<IVisitable>
 {
-   private Max _maxClass;
-   private int _index;
+   private readonly List<IVisitable> list;
+   private int _index = -1;
 
-   public MaxItrator(Max maxClass)
+   public MaxItrator(List<IVisitable> list)
    {
-      _maxClass = maxClass;
-      _index = -1;
+      this.list = list;
    
    }
-   
-   public IVisitable Current => _maxClass.Get(_index);
-   
-   
-   
+      
+   public IVisitable Current => list[_index];
+   object System.Collections.IEnumerator.Current => Current;
+
+   public bool MoveNext()
+   {
+     _index ++;
+     return _index < list.Count;
+   }
+
+   public void Reset() => _index = -1;
+
 
    public void Dispose(){}
    

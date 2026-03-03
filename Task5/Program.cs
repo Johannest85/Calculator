@@ -2,6 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.ExceptionServices;
 
 interface IVisitable {
    void Accept(IVisitor vtor);
@@ -66,6 +67,23 @@ class Evaluator: IVisitor {
     }
    public void Visit(Max e)
    {
+      bool first = true;
+      int currentMax = 0;
+
+      foreach(var arg in e)
+      {
+            arg.Accept(this);
+        int value = s.Pop();
+
+        if (first || value > currentMax)
+        {
+            currentMax = value;
+            first = false;
+        }
+         
+      }
+
+      s.Push(currentMax);
       
 
 
@@ -111,6 +129,22 @@ public void Visit(Fct e)
     s.Append("(");
     e.Expr.Accept(this);
     s.Append(")!");
+}
+
+public void Visit(Max e)
+{
+   s.Append("max{");
+   bool first = true;
+
+    foreach (var arg in e)
+   {
+      if (!first) s.Append(",");
+      arg.Accept(this);
+      first = false;
+   }
+
+   s.Append("}");
+      
 }
    public void Clear() => s.Clear();
    public override string ToString() => s.ToString();
@@ -171,6 +205,9 @@ class  Max : IVisitable , IEnumerable<IVisitable>
 
    public Max(List<IVisitable> expr)
    {
+      if (expr == null || expr.Count == 0)
+      throw new ArgumentException("passed arguments are not correct");
+
       Expr = expr;
    }
 
@@ -226,8 +263,31 @@ class MaxItrator : IEnumerator<IVisitable>
 
 class Program {
    static void Main() {
-   IVisitable t = new Fct(new Literal(5));
-Console.WriteLine(new Stringifier(t) + "=" + new Evaluator(t));
+        try
+    {
+        IVisitable t = new Max(new List<IVisitable> {
+            new Add(new Literal(-2), new Literal(9)),  // = 7
+            new Literal(6),
+            new Literal(0)
+        });
+
+        Console.WriteLine($"{new Stringifier(t)} = {new Evaluator(t)}");
+    }
+    catch (ArgumentException)
+    {
+        Console.WriteLine("passed arguments are not correct");
+    }
+
+    // 2️⃣ Tom lista (ska kasta exception)
+    try
+    {
+        IVisitable empty = new Max(new List<IVisitable>());
+        Console.WriteLine($"{new Stringifier(empty)} = {new Evaluator(empty)}");
+    }
+    catch (ArgumentException)
+    {
+        Console.WriteLine("passed arguments are not correct");
+    }
    }
 }
 
